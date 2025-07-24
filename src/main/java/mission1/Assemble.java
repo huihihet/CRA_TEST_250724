@@ -1,5 +1,7 @@
 package mission1;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Assemble {
@@ -16,6 +18,11 @@ public class Assemble {
     private static final int MANDO = 1, CONTINENTAL = 2, BOSCH_B = 3;
     private static final int BOSCH_S = 1, MOBIS = 2;
 
+    private static Map<Integer, String> carTable;
+    private static Map<Integer, String> engineTable;
+    private static Map<Integer, String> breakTable;
+    private static Map<Integer, String> steeringTable;
+
     private static int[] selectFieldArr = new int[5];
 
     public static void main(String[] args) {
@@ -25,6 +32,7 @@ public class Assemble {
     private static void makingCarLogic() {
         Scanner sc = new Scanner(System.in);
         int step = CarType_Q;
+        initTable();
 
         while (true) {
             System.out.print(CLEAR_SCREEN);
@@ -60,70 +68,13 @@ public class Assemble {
         sc.close();
     }
 
-    private static int executeCommand(int step, Integer userCommand) {
-        switch (step) {
-            case CarType_Q:
-                selectCarType(userCommand);
-                delay(800);
-                step = Engine_Q;
-                break;
-            case Engine_Q:
-                selectEngine(userCommand);
-                delay(800);
-                step = BrakeSystem_Q;
-                break;
-            case BrakeSystem_Q:
-                selectBrakeSystem(userCommand);
-                delay(800);
-                step = SteeringSystem_Q;
-                break;
-            case SteeringSystem_Q:
-                selectSteeringSystem(userCommand);
-                delay(800);
-                step = Run_Test;
-                break;
-            case Run_Test:
-                if (userCommand == 1) {
-                    runProducedCar();
-                    delay(2000);
-                } else if (userCommand == 2) {
-                    System.out.println("Test...");
-                    delay(1500);
-                    testProducedCar();
-                    delay(2000);
-                }
-                break;
-        }
-        return step;
+    private static void initTable() {
+        carTable = new HashMap<>(Map.of(SEDAN, "SEDAN", SUV, "SUV", TRUCK, "TRUCK"));
+        engineTable = new HashMap<>(Map.of(GM, "GM", TOYOTA, "TOYOTA", WIA, "WIA", 4, "고장난 엔진"));
+        breakTable = new HashMap<>(Map.of(MANDO, "MANDO", CONTINENTAL, "CONTINENTAL", BOSCH_B, "BOSCH"));
+        steeringTable = new HashMap<>(Map.of(BOSCH_S, "BOSCH", MOBIS, "MOBIS"));
     }
 
-    private static boolean isGoBackStep(int step) {
-        return step > CarType_Q;
-    }
-
-    private static boolean isGoFirstStep(int step) {
-        return step == Run_Test;
-    }
-
-    private static boolean isGoBack(Integer userCommand) {
-        return userCommand == 0;
-    }
-
-    private static Integer parsingInteger(String buf) {
-        int answer;
-        try {
-            answer = Integer.parseInt(buf);
-        } catch (NumberFormatException e) {
-            System.out.println("ERROR :: 숫자만 입력 가능");
-            delay(800);
-            return null;
-        }
-        return answer;
-    }
-
-    private static boolean isExit(String buf) {
-        return buf.equalsIgnoreCase("exit");
-    }
 
     private static void printDisplayView(int step) {
         switch (step) {
@@ -164,8 +115,10 @@ public class Assemble {
         System.out.println("어떤 엔진을 탑재할까요? (시스템 종료 : exit)");
         System.out.println("0. 뒤로가기");
         System.out.println("1. GM");
-        System.out.println("2. TOYOTA");
-        System.out.println("3. WIA");
+        System.out.println("2. TOYOTA" +
+                (selectFieldArr[CarType_Q] == SUV ? " (SUV는 TOYOTA 엔진 사용 불가)" : ""));
+        System.out.println("3. WIA" +
+                (selectFieldArr[CarType_Q] == TRUCK ? " (TRUCK은 WIA 엔진 사용 불가)" : ""));
         System.out.println("4. 고장난 엔진");
         System.out.println("===============================");
     }
@@ -173,8 +126,10 @@ public class Assemble {
     private static void showBrakeMenu() {
         System.out.println("어떤 제동장치를 선택할까요? (시스템 종료 : exit)");
         System.out.println("0. 뒤로가기");
-        System.out.println("1. MANDO");
-        System.out.println("2. CONTINENTAL");
+        System.out.println("1. MANDO" +
+                (selectFieldArr[CarType_Q] == TRUCK ? " (TRUCK은 MANDO 제동장치 사용 불가)" : ""));
+        System.out.println("2. CONTINENTAL" +
+                (selectFieldArr[CarType_Q] == SEDAN ? " (SEDAN은 CONTINENTAL 제동장치 사용 불가)" : ""));
         System.out.println("3. BOSCH");
         System.out.println("===============================");
     }
@@ -182,7 +137,8 @@ public class Assemble {
     private static void showSteeringMenu() {
         System.out.println("어떤 조향장치를 선택할까요? (시스템 종료 : exit)");
         System.out.println("0. 뒤로가기");
-        System.out.println("1. BOSCH");
+        System.out.println("1. BOSCH" +
+                (selectFieldArr[BrakeSystem_Q] == BOSCH_B ? " (제동장치가 BOSCH이므로 BOSCH 사용 권장)" : ""));
         System.out.println("2. MOBIS");
         System.out.println("===============================");
     }
@@ -194,6 +150,22 @@ public class Assemble {
         System.out.println("1. RUN");
         System.out.println("2. Test");
         System.out.println("===============================");
+    }
+
+    private static boolean isExit(String buf) {
+        return buf.equalsIgnoreCase("exit");
+    }
+
+    private static Integer parsingInteger(String buf) {
+        int answer;
+        try {
+            answer = Integer.parseInt(buf);
+        } catch (NumberFormatException e) {
+            System.out.println("ERROR :: 숫자만 입력 가능");
+            delay(800);
+            return null;
+        }
+        return answer;
     }
 
     private static boolean isOutputValidRange(int step, int ans) {
@@ -234,27 +206,73 @@ public class Assemble {
         }
     }
 
+    private static boolean isGoBack(Integer userCommand) {
+        return userCommand == 0;
+    }
+
+    private static boolean isGoBackStep(int step) {
+        return step > CarType_Q;
+    }
+
+    private static boolean isGoFirstStep(int step) {
+        return step == Run_Test;
+    }
+
+    private static int executeCommand(int step, Integer userCommand) {
+        switch (step) {
+            case CarType_Q:
+                selectCarType(userCommand);
+                delay(800);
+                step = Engine_Q;
+                break;
+            case Engine_Q:
+                selectEngine(userCommand);
+                delay(800);
+                step = BrakeSystem_Q;
+                break;
+            case BrakeSystem_Q:
+                selectBrakeSystem(userCommand);
+                delay(800);
+                step = SteeringSystem_Q;
+                break;
+            case SteeringSystem_Q:
+                selectSteeringSystem(userCommand);
+                delay(800);
+                step = Run_Test;
+                break;
+            case Run_Test:
+                if (userCommand == 1) {
+                    runProducedCar();
+                    delay(2000);
+                } else if (userCommand == 2) {
+                    System.out.println("Test...");
+                    delay(1500);
+                    testProducedCar();
+                    delay(2000);
+                }
+                break;
+        }
+        return step;
+    }
+
     private static void selectCarType(int carType) {
         selectFieldArr[CarType_Q] = carType;
-        System.out.printf("차량 타입으로 %s을 선택하셨습니다.\n", carType == 1 ? "Sedan" : carType == 2 ? "SUV" : "Truck");
+        System.out.printf("차량 타입으로 %s을 선택하셨습니다.\n", carTable.get(carType));
     }
 
     private static void selectEngine(int engine) {
         selectFieldArr[Engine_Q] = engine;
-        String name = engine == 1 ? "GM" : (engine == 2 ? "TOYOTA" : (engine == 3 ? "WIA" : "고장난 엔진"));
-        System.out.printf("%s 엔진을 선택하셨습니다.\n", name);
+        System.out.printf("%s 엔진을 선택하셨습니다.\n", engineTable.get(engine));
     }
 
     private static void selectBrakeSystem(int breakSystem) {
         selectFieldArr[BrakeSystem_Q] = breakSystem;
-        String name = breakSystem == 1 ? "MANDO" : breakSystem == 2 ? "CONTINENTAL" : "BOSCH";
-        System.out.printf("%s 제동장치를 선택하셨습니다.\n", name);
+        System.out.printf("%s 제동장치를 선택하셨습니다.\n", breakTable.get(breakSystem));
     }
 
     private static void selectSteeringSystem(int steeringSystem) {
         selectFieldArr[SteeringSystem_Q] = steeringSystem;
-        String name = steeringSystem == 1 ? "BOSCH" : "MOBIS";
-        System.out.printf("%s 조향장치를 선택하셨습니다.\n", name);
+        System.out.printf("%s 조향장치를 선택하셨습니다.\n", steeringTable.get(steeringSystem));
     }
 
     private static void runProducedCar() {
@@ -262,47 +280,59 @@ public class Assemble {
             System.out.println("자동차가 동작되지 않습니다");
             return;
         }
-        if (selectFieldArr[Engine_Q] == 4) {
+        if (isBrokenEngine()) {
             System.out.println("엔진이 고장나있습니다.");
             System.out.println("자동차가 움직이지 않습니다.");
             return;
         }
 
-        String[] carNames = {"", "Sedan", "SUV", "Truck"};
-        String[] engNames = {"", "GM", "TOYOTA", "WIA"};
-        System.out.printf("Car Type : %s\n", carNames[selectFieldArr[CarType_Q]]);
-        System.out.printf("Engine   : %s\n", engNames[selectFieldArr[Engine_Q]]);
-        System.out.printf("Brake    : %s\n",
-                selectFieldArr[BrakeSystem_Q] == 1 ? "Mando" :
-                        selectFieldArr[BrakeSystem_Q] == 2 ? "Continental" : "Bosch");
-        System.out.printf("Steering : %s\n",
-                selectFieldArr[SteeringSystem_Q] == 1 ? "Bosch" : "Mobis");
+        System.out.println("Car Type : " + carTable.get(selectFieldArr[CarType_Q]));
+        System.out.println("Engine   : " + engineTable.get(selectFieldArr[Engine_Q]));
+        System.out.println("Brake    : " + breakTable.get(selectFieldArr[BrakeSystem_Q]));
+        System.out.println("Steering : " + steeringTable.get(selectFieldArr[SteeringSystem_Q]));
         System.out.println("자동차가 동작됩니다.");
     }
 
+    private static boolean isBrokenEngine() {
+        return selectFieldArr[Engine_Q] == 4;
+    }
+
     private static boolean isValidCheck() {
-        if (selectFieldArr[CarType_Q] == SEDAN && selectFieldArr[BrakeSystem_Q] == CONTINENTAL) return false;
-        if (selectFieldArr[CarType_Q] == SUV && selectFieldArr[Engine_Q] == TOYOTA) return false;
-        if (selectFieldArr[CarType_Q] == TRUCK && selectFieldArr[Engine_Q] == WIA) return false;
-        if (selectFieldArr[CarType_Q] == TRUCK && selectFieldArr[BrakeSystem_Q] == MANDO) return false;
-        if (selectFieldArr[BrakeSystem_Q] == BOSCH_B && selectFieldArr[SteeringSystem_Q] != BOSCH_S) return false;
+        if (isSedanUseContinentalBreak()) return false;
+        if (isSuvUseToyotaEngine()) return false;
+        if (isTruckUseWiaEngine()) return false;
+        if (isTruckUseMandoEngine()) return false;
+        if (isUseBoschBreakAndSteering()) return false;
         return true;
     }
 
+    private static boolean isSedanUseContinentalBreak() {
+        return selectFieldArr[CarType_Q] == SEDAN && selectFieldArr[BrakeSystem_Q] == CONTINENTAL;
+    }
+
+    private static boolean isSuvUseToyotaEngine() {
+        return selectFieldArr[CarType_Q] == SUV && selectFieldArr[Engine_Q] == TOYOTA;
+    }
+
+    private static boolean isTruckUseWiaEngine() {
+        return selectFieldArr[CarType_Q] == TRUCK && selectFieldArr[Engine_Q] == WIA;
+    }
+
+    private static boolean isTruckUseMandoEngine() {
+        return selectFieldArr[CarType_Q] == TRUCK && selectFieldArr[BrakeSystem_Q] == MANDO;
+    }
+
+    private static boolean isUseBoschBreakAndSteering() {
+        return selectFieldArr[BrakeSystem_Q] == BOSCH_B && selectFieldArr[SteeringSystem_Q] != BOSCH_S;
+    }
+
     private static void testProducedCar() {
-        if (selectFieldArr[CarType_Q] == SEDAN && selectFieldArr[BrakeSystem_Q] == CONTINENTAL) {
-            fail("Sedan에는 Continental제동장치 사용 불가");
-        } else if (selectFieldArr[CarType_Q] == SUV && selectFieldArr[Engine_Q] == TOYOTA) {
-            fail("SUV에는 TOYOTA엔진 사용 불가");
-        } else if (selectFieldArr[CarType_Q] == TRUCK && selectFieldArr[Engine_Q] == WIA) {
-            fail("Truck에는 WIA엔진 사용 불가");
-        } else if (selectFieldArr[CarType_Q] == TRUCK && selectFieldArr[BrakeSystem_Q] == MANDO) {
-            fail("Truck에는 Mando제동장치 사용 불가");
-        } else if (selectFieldArr[BrakeSystem_Q] == BOSCH_B && selectFieldArr[SteeringSystem_Q] != BOSCH_S) {
-            fail("Bosch제동장치에는 Bosch조향장치 이외 사용 불가");
-        } else {
-            System.out.println("자동차 부품 조합 테스트 결과 : PASS");
-        }
+        if (isSedanUseContinentalBreak()) fail("Sedan에는 Continental제동장치 사용 불가");
+        else if (isSuvUseToyotaEngine()) fail("SUV에는 TOYOTA엔진 사용 불가");
+        else if (isTruckUseWiaEngine()) fail("Truck에는 WIA엔진 사용 불가");
+        else if (isTruckUseMandoEngine()) fail("Truck에는 Mando제동장치 사용 불가");
+        else if (isUseBoschBreakAndSteering()) fail("Bosch제동장치에는 Bosch조향장치 이외 사용 불가");
+        else System.out.println("자동차 부품 조합 테스트 결과 : PASS");
     }
 
     private static void fail(String msg) {

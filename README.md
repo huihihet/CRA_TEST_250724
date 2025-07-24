@@ -8,5 +8,4 @@
 |D4                 |O    |
 |D5                 |O    |
 
-
-<img src="images/CodeCoverage.png", width="1000">
+![Code Coverage](images/CodeCoverage.png)
